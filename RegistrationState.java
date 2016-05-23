@@ -14,44 +14,45 @@ import java.sql.*;
 
 
 public class RegistrationState extends State {
-    private GridPane myLayout;
-    private Scene myScene;
-    private Label eLabel;
 
-    public RegistrationState(int theWidth, int theHeight) {
+    public RegistrationState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
+        super(theDB, theUser);
         myLayout = new GridPane();
+        generateRegistrationScene();
     }
 
-    private void generateLoginScene() {
+    private void generateRegistrationScene() {
         eLabel = new Label("");
         TextField username = new TextField("Username");
         TextField password1 = new TextField("Password");
         TextField password2 = new TextField("Reenter password");
         Button registerButton = new Button("Register");
-        Button loginButton = new Button("Back");
+        Button backButton = new Button("Back");
 
         eLabel.setTextFill(Color.rgb(250, 0, 0));
         username.setStyle("-fx-text-inner-color: grey;");
         password1.setStyle("-fx-text-inner-color: grey;");
         password2.setStyle("-fx-text-inner-color: grey;");
 
-
         registerButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 registerButtonHit(username.getText(), password1.getText(), password2.getText());
+                myUser.setUsername(username.getText());
+                setChanged();
+                notifyObservers("login");
             }
         });
 
-        loginButton.setOnAction(new EventHandler<ActionEvent>() {
+        backButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 setChanged();
-                notifyObservers("Username");
+                notifyObservers("login");
             }
         });
 
         GridPane buttonLayout = new GridPane();
         buttonLayout.add(registerButton, 0, 0);
-        buttonLayout.add(loginButton, 1, 0);
+        buttonLayout.add(backButton, 1, 0);
 
         myLayout.add(eLabel, 0, 0);
         myLayout.add(username, 0, 1);
@@ -83,14 +84,5 @@ public class RegistrationState extends State {
                 } else eLabel.setText("Passwords do not match");
             } else eLabel.setText("Password 0 - 25 chars");
         } else eLabel.setText("Username 1 - 15 chars");
-    }
-
-    public void setErrorMessage(String theError) {
-        eLabel.setText(theError);
-    }
-
-    public Scene getScene() {
-        generateLoginScene();
-        return myScene;
     }
 }

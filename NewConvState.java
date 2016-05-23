@@ -1,37 +1,35 @@
-import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-// import javafx.scene.control.Button;
 import javafx.stage.Stage;
-import javafx.scene.layout.GridPane;
-// import javafx.scene.control.Button;
-// import javafx.scene.control.TextField;
-// import javafx.scene.control.PasswordField;
-import javafx.event.EventHandler;
-import javafx.scene.input.KeyEvent;
 
-import javafx.scene.input.KeyCode;
-import javafx.event.ActionEvent;
-// import javafx.scene.control.Label;
+import javafx.scene.Scene;
 import javafx.scene.paint.Color;
-import java.sql.*;
-import javafx.scene.control.*;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
 
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 
 public class NewConvState extends State {
-    private GridPane myLayout;
-    private Scene myScene;
-    private Label eLabel;
-    private int myUserID;
 
-    public NewConvState(int theWidth, int theHeight) {
-        myLayout = new GridPane();
+    public NewConvState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
+        super(theDB, theUser);
+        generateNewConvScene(theWidth, theHeight);
     }
 
-    private void generateLoginScene() {
+    private void generateNewConvScene(int theWidth, int theHeight) {
         Label directions = new Label("Enter conversation name");
         TextField conversationName = new TextField();
         Button createButton = new Button("Create");
         Button cancelButton = new Button("Cancel");
+        myLayout = new GridPane();
         eLabel = new Label("");
         eLabel.setTextFill(Color.rgb(250, 0, 0));
 
@@ -76,13 +74,12 @@ public class NewConvState extends State {
                 idconversations = Integer.parseInt(rs.getString(1));
             }
             if (idconversations == 0) {
-                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversations` (`owner`, `name`) VALUES ('" + myUserID + "', '" + theName + "');");
+                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversations` (`owner`, `name`) VALUES ('" + myUser.getUserID() + "', '" + theName + "');");
                 rs = myDB.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
                 if (rs.next()) {
                     idconversations = Integer.parseInt(rs.getString(1));
                 }
-                System.out.println(idconversations);
-                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + idconversations + "', '" + myUserID + "');");
+                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + idconversations + "', '" + myUser.getUserID() + "');");
             } else eLabel.setText("Conversation exists");
         } catch (SQLException e) {
             System.out.println("Exception: " + e);
@@ -97,14 +94,5 @@ public class NewConvState extends State {
         } else {
             eLabel.setText("Name field is empty");
         }
-    }
-
-    public void setUserID(int theUserID) {
-        myUserID = theUserID;
-    }
-
-    public Scene getScene() {
-        generateLoginScene();
-        return myScene;
     }
 }
