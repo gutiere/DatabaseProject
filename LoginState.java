@@ -13,10 +13,6 @@ import javafx.scene.paint.Color;
 import java.sql.*;
 
 public class LoginState extends State {
-    // private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String USERNAME = "UWTuser";
-    private static final String PASSWORD = "something";
     private GridPane myLayout;
     private Scene myScene;
     private Label eLabel;
@@ -61,8 +57,7 @@ public class LoginState extends State {
 
     private void handleLoginButton(String username, String password) {
         try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "' AND users.password='" + password + "';");
+            ResultSet rs = myDB.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "' AND users.password='" + password + "';");
             int iduser = 0;
             if (rs.next()) {
                 iduser = Integer.parseInt(rs.getString(1));

@@ -14,10 +14,6 @@ import java.sql.*;
 
 
 public class RegistrationState extends State {
-    // private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String USERNAME = "UWTuser";
-    private static final String PASSWORD = "something";
     private GridPane myLayout;
     private Scene myScene;
     private Label eLabel;
@@ -71,14 +67,13 @@ public class RegistrationState extends State {
             if (password1.length() <= 25) {
                 if (password1.equals(password2)) {
                     try {
-                        DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-                        ResultSet rs = db.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "';");
+                        ResultSet rs = myDB.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "';");
                         int iduser = 0;
                         if (rs.next()) {
                             iduser = Integer.parseInt(rs.getString(1));
                         }
                         if (iduser == 0) {
-                            db.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`users` (`username`, `password`) VALUES ('" + username + "', '" + password1 + "')");
+                            myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`users` (`username`, `password`) VALUES ('" + username + "', '" + password1 + "')");
                             setChanged();
                             notifyObservers(username);
                         } else eLabel.setText("Username taken");

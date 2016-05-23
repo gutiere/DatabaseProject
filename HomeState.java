@@ -20,11 +20,6 @@ import javax.swing.Timer;
 import java.awt.event.ActionListener;
 
 public class HomeState extends State {
-
-    // private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String USERNAME = "UWTuser";
-    private static final String PASSWORD = "something";
     private GridPane myLayout;
     private Scene myScene;
     private Label eLabel;
@@ -115,9 +110,8 @@ public class HomeState extends State {
         temp.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 try {
-                    DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
                     String countQuery = "SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';";
-                    ResultSet rs = db.DML_ResultSet(countQuery);
+                    ResultSet rs = myDB.DML_ResultSet(countQuery);
                     if (rs.next()) {
                         myConvID = Integer.parseInt(rs.getString(1));
                     }
@@ -140,9 +134,8 @@ public class HomeState extends State {
 
     private void submitMessage(String theMessage) {
         try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
             String countQuery = "SELECT COUNT(*) FROM messages WHERE messages.conversation=" + myConvID + ";";
-            ResultSet rs = db.DML_ResultSet(countQuery);
+            ResultSet rs = myDB.DML_ResultSet(countQuery);
             int totalMessages = 0;
             if (rs.next()) {
                 totalMessages = Integer.parseInt(rs.getString(1));
@@ -151,7 +144,7 @@ public class HomeState extends State {
             String submitQuery = "INSERT INTO `gutierrez_edgardo_db`.`messages` "
               + "(`conversation`, `counter`, `sender`, `message`) "
               + "VALUES ('" + myConvID + "', '" + counter + "', '" + myUserID + "', '" + theMessage + "');";
-            db.DML_Statement(submitQuery);
+            myDB.DML_Statement(submitQuery);
         } catch (SQLException e) {
             System.out.println("Exception: " + e);
         }
@@ -162,8 +155,7 @@ public class HomeState extends State {
         String convsQuery = "SELECT conversations.name FROM gutierrez_edgardo_db.conversations;";
 
         try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet(countQuery);
+            ResultSet rs = myDB.DML_ResultSet(countQuery);
             int totalConvs = 0;
             if (rs.next()) {
                 totalConvs = Integer.parseInt(rs.getString(1));
@@ -171,7 +163,7 @@ public class HomeState extends State {
 
             // At least 1 conversation
             if (totalConvs > 0) {
-                rs = db.DML_ResultSet(convsQuery);
+                rs = myDB.DML_ResultSet(convsQuery);
                 String[] convNames = new String[totalConvs];
                 rs.next();
                 for (int i = 0; i < totalConvs; i++) {
@@ -189,14 +181,13 @@ public class HomeState extends State {
     private String getMessages(int theAmount) {
         try {
             String countQuery = "SELECT COUNT(*) FROM messages WHERE messages.conversation=" + myConvID + ";";
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet(countQuery);
+            ResultSet rs = myDB.DML_ResultSet(countQuery);
             int totalMessages = 0;
             if (rs.next()) {
                 totalMessages = Integer.parseInt(rs.getString(1));
             }
             String messagesQuery = "SELECT messages.message FROM messages WHERE messages.conversation=" + myConvID + ";";
-            rs = db.DML_ResultSet(messagesQuery);
+            rs = myDB.DML_ResultSet(messagesQuery);
             rs.next();
             String messages = "";
             int threshhold = -1;

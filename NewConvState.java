@@ -18,10 +18,6 @@ import javafx.scene.control.*;
 
 
 public class NewConvState extends State {
-    // private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String USERNAME = "UWTuser";
-    private static final String PASSWORD = "something";
     private GridPane myLayout;
     private Scene myScene;
     private Label eLabel;
@@ -74,20 +70,19 @@ public class NewConvState extends State {
 
     private void createConversation(String theName) {
         try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
+            ResultSet rs = myDB.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
             int idconversations = 0;
             if (rs.next()) {
                 idconversations = Integer.parseInt(rs.getString(1));
             }
             if (idconversations == 0) {
-                db.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversations` (`owner`, `name`) VALUES ('" + myUserID + "', '" + theName + "');");
-                rs = db.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
+                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversations` (`owner`, `name`) VALUES ('" + myUserID + "', '" + theName + "');");
+                rs = myDB.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
                 if (rs.next()) {
                     idconversations = Integer.parseInt(rs.getString(1));
                 }
                 System.out.println(idconversations);
-                db.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + idconversations + "', '" + myUserID + "');");
+                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + idconversations + "', '" + myUserID + "');");
             } else eLabel.setText("Conversation exists");
         } catch (SQLException e) {
             System.out.println("Exception: " + e);

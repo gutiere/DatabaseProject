@@ -6,6 +6,7 @@ import javafx.event.ActionEvent;
 public abstract class State extends Observable {
     private Scene myScene;
     private String myErrorMessage;
+    public DBAdapter myDB;
 
     public Scene getScene() {
         return myScene;
@@ -13,5 +14,9 @@ public abstract class State extends Observable {
 
     public void setErrorMessage(String theError) {
         myErrorMessage = theError;
+    }
+
+    public void addDatabase(DBAdapter theDB) {
+        myDB = theDB;
     }
 }
