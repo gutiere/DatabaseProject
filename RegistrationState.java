@@ -75,8 +75,6 @@ public class RegistrationState extends State {
                         }
                         if (iduser == 0) {
                             myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`users` (`username`, `password`) VALUES ('" + username + "', '" + password1 + "')");
-                            setChanged();
-                            notifyObservers(username);
                         } else eLabel.setText("Username taken");
                     } catch (SQLException e) {
                         System.out.println("Exception: " + e);

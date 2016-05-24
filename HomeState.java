@@ -19,63 +19,59 @@ import java.sql.SQLException;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import java.awt.event.ActionListener;
+
+import javafx.animation.Animation;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
+
+import javafx.util.Duration;
 
 public class HomeState extends State {
     private TextField myTextBox;
     private int myContactID;
+    private Timeline myTimer;
+    private Label myChatRoom;
+    private Menu myChatMenu;
 
     public HomeState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
         super(theDB, theUser);
         myLayout = new GridPane();
         generateHomeScene();
+
+        myTimer = new Timeline(new KeyFrame(Duration.millis(200), new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                myChatRoom.setText(getMessages(5));
+            }
+        }));
+        myTimer.setCycleCount(Timeline.INDEFINITE);
+        myTimer.play();
     }
 
     private void generateHomeScene() {
-        Label welcome = new Label(getMessages(5));
+        myChatRoom = new Label(getMessages(5));
         myTextBox = new TextField();
 
         MenuBar menuBar = new MenuBar();
         Menu menuFile = new Menu("File");
-        Menu menuChat = new Menu("Chat");
-
-        String[] conversations = getConversations();
-        if (conversations != null) {
-            for (int i = 0; i < conversations.length; i++) {
-                menuChat.getItems().add(menuCreateConvMenu(conversations[i]));
-            }
-        }
-
-        MenuItem menuItemAdd = new MenuItem("Add");
-        menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-                setChanged();
-                notifyObservers("newconv");
-            }
-        });
-
-        MenuItem menuItemRefresh = new MenuItem("(Refresh)");
-
-        menuItemRefresh.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-                setChanged();
-                notifyObservers("refresh");
-            }
-        });
+        myChatMenu = new Menu("Chat");
 
         MenuItem menuItemSignOut = new MenuItem("(Sign out)");
         menuItemSignOut.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
+                myTimer.stop();
                 setChanged();
                 notifyObservers("login");
             }
         });
 
-        menuChat.getItems().add(menuItemAdd);
-        menuChat.getItems().add(menuItemRefresh);
+        myChatMenu = createChatMenu();
+
         menuFile.getItems().add(menuItemSignOut);
-        menuBar.getMenus().addAll(menuFile, createContactsMenu(), menuChat);
+        menuBar.getMenus().addAll(menuFile, createContactsMenu(), myChatMenu);
         myLayout.add(menuBar, 0, 0);
-        myLayout.add(welcome, 0, 1);
+        myLayout.add(myChatRoom, 0, 1);
         myLayout.add(myTextBox, 0, 2);
         myScene = new Scene(myLayout);
 
@@ -87,6 +83,7 @@ public class HomeState extends State {
                     if (text.length() > 0) {
                         submitMessage(text);
                         myTextBox.setText("");
+                        myTimer.stop();
                         setChanged();
                         notifyObservers("refresh");
                     }
@@ -94,6 +91,37 @@ public class HomeState extends State {
                 }
             }
         });
+    }
+
+    private Menu createChatMenu() {
+        Menu chatMenu = new Menu("Chat");
+        String[] conversations = getConversations();
+        if (conversations != null) {
+            for (int i = 0; i < conversations.length; i++) {
+                chatMenu.getItems().add(menuCreateConvMenu(conversations[i]));
+            }
+        }
+
+        MenuItem menuItemAdd = new MenuItem("Add");
+        menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myTimer.stop();
+                setChanged();
+                notifyObservers("newconv");
+            }
+        });
+
+        MenuItem menuItemRefresh = new MenuItem("Refresh");
+        menuItemRefresh.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myTimer.stop();
+                setChanged();
+                notifyObservers("refresh");
+            }
+        });
+
+        chatMenu.getItems().addAll(menuItemAdd, menuItemRefresh);
+        return chatMenu;
     }
 
     private Menu createContactsMenu() {
@@ -117,6 +145,7 @@ public class HomeState extends State {
         MenuItem addContact = new MenuItem("Add");
         addContact.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
+                myTimer.stop();
                 setChanged();
                 notifyObservers("newcontact");
             }
@@ -143,6 +172,7 @@ public class HomeState extends State {
                     System.out.println(exception);
                 }
                 myUser.setConvName(theConvName);
+                myTimer.stop();
                 setChanged();
                 notifyObservers("refresh");
             }

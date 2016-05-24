@@ -9,6 +9,9 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.paint.Color;
 
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
+
 import javafx.event.EventHandler;
 import javafx.event.ActionEvent;
 
@@ -43,6 +46,18 @@ public class LoginState extends State {
                 notifyObservers("register");
             }
         });
+
+        EventHandler<KeyEvent> enter = new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getCode() == KeyCode.ENTER)  {
+                    handleLoginButton(username.getText(), password.getText());
+                }
+            }
+        };
+
+        username.setOnKeyPressed(enter);
+        password.setOnKeyPressed(enter);
 
         GridPane buttonLayout = new GridPane();
         buttonLayout.add(registerButton, 1, 0);
