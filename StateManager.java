@@ -31,12 +31,18 @@ public class StateManager implements Observer {
         State state = null;
         if (theState.equals("login")) {
             state = new LoginState(myDB, myUser, WIDTH, HEIGHT);
-        } else if (theState.equals("registration")) {
+        } else if (theState.equals("register")) {
             state = new RegistrationState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("home")) {
             state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("newconv")) {
             state = new NewConvState(myDB, myUser, WIDTH, HEIGHT);
+        } else if (theState.equals("newcontact")) {
+            state = new NewContactState(myDB, myUser, WIDTH, HEIGHT);
+        } else if (theState.equals("refresh")) {
+            if (myCurrentState instanceof HomeState) {
+                state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
+            }
         }
         state.addObserver(this);
         myCurrentState = state;
@@ -46,20 +52,7 @@ public class StateManager implements Observer {
     @Override
     public void update(Observable obj, Object arg) {
         if (arg instanceof String) {
-            String string = (String)arg;
-            if (string.equals("register")) {
-                generateState("registration");
-            } else if (string.equals("home")) {
-                generateState("home");
-            } else if (string.equals("login")) {
-                generateState("login");
-            } else if (string.equals("newconv")) {
-                generateState("newconv");
-            } else if (string.equals("refresh")) {
-                if (myCurrentState instanceof HomeState) {
-                    generateState("home");
-                }
-            }
+            generateState((String)arg);
         }
     }
 }

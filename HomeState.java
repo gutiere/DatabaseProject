@@ -22,6 +22,7 @@ import javafx.event.EventHandler;
 
 public class HomeState extends State {
     private TextField myTextBox;
+    private int myContactID;
 
     public HomeState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
         super(theDB, theUser);
@@ -44,7 +45,7 @@ public class HomeState extends State {
             }
         }
 
-        MenuItem menuItemAdd = new MenuItem("  +");
+        MenuItem menuItemAdd = new MenuItem("Add");
         menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 setChanged();
@@ -72,7 +73,7 @@ public class HomeState extends State {
         menuChat.getItems().add(menuItemAdd);
         menuChat.getItems().add(menuItemRefresh);
         menuFile.getItems().add(menuItemSignOut);
-        menuBar.getMenus().addAll(menuFile, menuChat);
+        menuBar.getMenus().addAll(menuFile, createContactsMenu(), menuChat);
         myLayout.add(menuBar, 0, 0);
         myLayout.add(welcome, 0, 1);
         myLayout.add(myTextBox, 0, 2);
@@ -95,16 +96,45 @@ public class HomeState extends State {
         });
     }
 
-    private Menu menuCreateConvMenu(String theName) {
-        Menu menu = new Menu(theName);
+    private Menu createContactsMenu() {
+        Menu contactsMenu = new Menu("Contacts");
+        int[] contacts = getContacts();
+        String name;
+        if (contacts != null) {
+            for (int i = 0; i < contacts.length; i++) {
+                String nameQuery = "SELECT users.username FROM users WHERE users.idusers=" + contacts[i] + ";";
+                try {
+                    ResultSet rs = myDB.DML_ResultSet(nameQuery);
+                    if (rs.next()) {
+                        name = rs.getString(1);
+                    } else name = "null";
+                    contactsMenu.getItems().add(new MenuItem(name));
+                } catch (SQLException e) {
+                    System.out.println(e);
+                }
+            }
+        }
+        MenuItem addContact = new MenuItem("Add");
+        addContact.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                setChanged();
+                notifyObservers("newcontact");
+            }
+        });
+        contactsMenu.getItems().add(addContact);
+        return contactsMenu;
+    }
+
+    private Menu menuCreateConvMenu(String theConvName) {
+        Menu menu = new Menu(theConvName);
 
         MenuItem select = new MenuItem("Select");
-        MenuItem add = new MenuItem("Add user");
+        Menu add = new Menu("Add user");
 
         select.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 try {
-                    String countQuery = "SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';";
+                    String countQuery = "SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theConvName + "';";
                     ResultSet rs = myDB.DML_ResultSet(countQuery);
                     if (rs.next()) {
                         myUser.setConvID(Integer.parseInt(rs.getString(1)));
@@ -112,27 +142,84 @@ public class HomeState extends State {
                 } catch (SQLException exception) {
                     System.out.println(exception);
                 }
-                myUser.setConvName(theName);
+                myUser.setConvName(theConvName);
                 setChanged();
                 notifyObservers("refresh");
             }
         });
 
-        // add.setOnAction(new EventHandler<ActionEvent>() {
-        //     @Override public void handle(ActionEvent e) {
-        //         try {
-        //             String addQuery = "INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + conv + "', '+');";
-        //             ResultSet rs = myDB.DML_ResultSet(addQuery);
-        //         } catch (SQLException exception) {
-        //             System.out.println(exception);
-        //         }
-        //     }
-        // });
+        int[] contacts = getContacts();
+        if (contacts != null) {
+            for (int i = 0; i < contacts.length; i++) {
+                add.getItems().add(createContactItem(theConvName, contacts[i]));
+            }
+        }
 
         menu.getItems().add(select);
         menu.getItems().add(add);
 
         return menu;
+    }
+
+    private int[] getContacts() {
+        try {
+            String countQuery = "SELECT COUNT(*) FROM contacts WHERE contacts.user=" + myUser.getUserID() + ";";
+            String contactsQuery = "SELECT contacts.contact FROM contacts WHERE contacts.user=" + myUser.getUserID() + ";";
+
+
+            ResultSet rs = myDB.DML_ResultSet(countQuery);
+            int totalContacts = 0;
+            if (rs.next()) {
+                totalContacts = Integer.parseInt(rs.getString(1));
+            }
+
+            // At least 1 conversation
+            if (totalContacts > 0) {
+                rs = myDB.DML_ResultSet(contactsQuery);
+                int[] contacts = new int[totalContacts];
+                rs.next();
+                for (int i = 0; i < totalContacts; i++) {
+                    contacts[i] = Integer.parseInt(rs.getString(1));
+                    rs.next();
+                }
+                return contacts;
+            }
+        } catch (SQLException e) {
+            System.out.println("Exception: " + e);
+        }
+        return null;
+    }
+
+    private MenuItem createContactItem(String theConv, int theContact) {
+        String contactName = "";
+
+        try {
+            String contactQuery = "SELECT users.username FROM users WHERE users.idusers=" + theContact + ";";
+            String convQuery = "SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theConv + "';";
+            ResultSet rs = myDB.DML_ResultSet(convQuery);
+            if (rs.next()) {
+                myContactID = Integer.parseInt(rs.getString(1));
+            } else {
+                myContactID = -1;
+            }
+            rs = myDB.DML_ResultSet(contactQuery);
+            if (rs.next()) {
+                contactName = rs.getString(1);
+            }
+
+            MenuItem contact = new MenuItem(contactName);
+            contact.setOnAction(new EventHandler<ActionEvent>() {
+                @Override public void handle(ActionEvent e) {
+                    String addQuery = "INSERT INTO conversants (conversation, conversant) VALUES ('" + myContactID + "', '" + theContact + "');";
+                    myDB.DML_Statement(addQuery);
+                }
+            });
+            return contact;
+
+        } catch (SQLException exception) {
+            System.out.println(exception);
+        }
+        return null;
     }
 
     private void submitMessage(String theMessage) {

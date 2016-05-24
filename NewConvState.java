@@ -80,6 +80,7 @@ public class NewConvState extends State {
                     idconversations = Integer.parseInt(rs.getString(1));
                 }
                 myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + idconversations + "', '" + myUser.getUserID() + "');");
+                myUser.setConvID(idconversations);
             } else eLabel.setText("Conversation exists");
         } catch (SQLException e) {
             System.out.println("Exception: " + e);
