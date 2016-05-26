@@ -49,8 +49,7 @@ public class NewContactState extends State {
 
         cancelButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                setChanged();
-                notifyObservers("home");
+                changeState("home");
             }
         });
 
@@ -68,24 +67,17 @@ public class NewContactState extends State {
     private void create(String theName) {
         if (theName.length() > 0) {
             try {
-                String usernameQuery = "SELECT users.idusers FROM users WHERE users.username='" + theName + "';";
+                String usernameQuery = "SELECT COUNT(users.username) FROM users WHERE users.username='" + theName + "';";
                 ResultSet rs = myDB.DML_ResultSet(usernameQuery);
-                int contactid = 0;
                 if (rs.next()) {
-                    contactid = Integer.parseInt(rs.getString(1));
-                }
-                if (contactid > 0) {
-                    myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`contacts` (`user`, `contact`) VALUES ('" + myUser.getUserID() + "', '" + contactid + "');");
-                    setChanged();
-                    notifyObservers("home");
-                } else {
-                    eLabel.setText("User does not exist");
+                    if (Integer.parseInt(rs.getString(1)) > 0) {
+                        myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`contacts` (`username`, `contact`) VALUES ('" + myUser.getUsername() + "', '" + theName + "');");
+                        changeState("home");
+                    } else eLabel.setText("User does not exist");
                 }
             } catch (SQLException e) {
                 System.out.println(e);
             }
-        } else {
-            eLabel.setText("Username field is empty");
-        }
+        } else eLabel.setText("Username field is empty");
     }
 }

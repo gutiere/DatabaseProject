@@ -28,8 +28,10 @@ public class LoginState extends State {
     private void generateLoginScene() {
         TextField username = new TextField(myUser.getUsername());
         PasswordField password = new PasswordField();
+        GridPane buttonLayout = new GridPane();
         Button loginButton = new Button("Login");
         Button registerButton = new Button("Register");
+
         username.setStyle("-fx-text-inner-color: grey;");
         eLabel = new Label("");
         eLabel.setTextFill(Color.rgb(250, 0, 0));
@@ -42,8 +44,7 @@ public class LoginState extends State {
 
         registerButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                setChanged();
-                notifyObservers("register");
+                changeState("register");
             }
         });
 
@@ -58,11 +59,8 @@ public class LoginState extends State {
 
         username.setOnKeyPressed(enter);
         password.setOnKeyPressed(enter);
-
-        GridPane buttonLayout = new GridPane();
         buttonLayout.add(registerButton, 1, 0);
         buttonLayout.add(loginButton, 0, 0);
-
         myLayout.add(eLabel, 0, 0);
         myLayout.add(username, 0, 1);
         myLayout.add(password, 0, 2);
@@ -72,18 +70,12 @@ public class LoginState extends State {
 
     private void handleLoginButton(String username, String password) {
         try {
-            ResultSet rs = myDB.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "' AND users.password='" + password + "';");
-            int iduser = 0;
+            ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(login.username) from login WHERE login.username='" + username + "' AND login.password='" + password + "';");
             if (rs.next()) {
-                iduser = Integer.parseInt(rs.getString(1));
-            }
-            if (iduser != 0) {
-                myUser.setUserID(iduser);
-                myUser.setUsername(username);
-                setChanged();
-                notifyObservers("home");
-            } else {
-                eLabel.setText("Invalid login info");
+                if (Integer.parseInt(rs.getString(1)) != 0) {
+                    myUser.setUsername(username);
+                    changeState("home");
+                } else eLabel.setText("Invalid login info");
             }
         } catch (SQLException e) {
             eLabel.setText("No database connection");

@@ -28,4 +28,9 @@ public abstract class State extends Observable {
     public void setUser(User theUser) {
         myUser = theUser;
     }
+
+    public void changeState(String theState) {
+        setChanged();
+        notifyObservers(theState);
+    }
 }

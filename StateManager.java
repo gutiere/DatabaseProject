@@ -6,7 +6,7 @@ import java.util.Observable;
 public class StateManager implements Observer {
 
     private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    // private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
+    // private static final String URL = "jdbc:mysql://10.16.1.20:3306/gutierrez_edgardo_db?useSSL=false";
     private static final String USERNAME = "UWTuser";
     private static final String PASSWORD = "something";
     private static final int WIDTH = 300;

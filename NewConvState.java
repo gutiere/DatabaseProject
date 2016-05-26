@@ -68,32 +68,24 @@ public class NewConvState extends State {
 
     private void createConversation(String theName) {
         try {
-            ResultSet rs = myDB.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
+            ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(conversations.name) FROM conversations WHERE conversations.name='" + theName + "';");
             int idconversations = 0;
             if (rs.next()) {
-                idconversations = Integer.parseInt(rs.getString(1));
+                if (Integer.parseInt(rs.getString(1)) == 0) {
+                    myDB.DML_Statement("INSERT INTO conversations (`name`, `owner`) VALUES ('" + theName + "', '" + myUser.getUsername() + "');");
+                    myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + theName + "', '" + myUser.getUsername() + "');");
+                    myUser.setConvName(theName);
+                } else eLabel.setText("Conversation exists");
             }
-            if (idconversations == 0) {
-                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversations` (`owner`, `name`) VALUES ('" + myUser.getUserID() + "', '" + theName + "');");
-                rs = myDB.DML_ResultSet("SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';");
-                if (rs.next()) {
-                    idconversations = Integer.parseInt(rs.getString(1));
-                }
-                myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + idconversations + "', '" + myUser.getUserID() + "');");
-                myUser.setConvID(idconversations);
-            } else eLabel.setText("Conversation exists");
         } catch (SQLException e) {
-            System.out.println("Exception: " + e);
+            System.out.println(e);
         }
     }
 
     private void create(String theName) {
         if (theName.length() > 0) {
             createConversation(theName);
-            setChanged();
-            notifyObservers("home");
-        } else {
-            eLabel.setText("Name field is empty");
-        }
+            changeState("home");
+        } else eLabel.setText("Name field is empty");
     }
 }

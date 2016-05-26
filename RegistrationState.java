@@ -9,7 +9,6 @@ import javafx.scene.control.PasswordField;
 import javafx.event.EventHandler;
 import javafx.event.ActionEvent;
 import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
 import java.sql.*;
 
 
@@ -29,37 +28,26 @@ public class RegistrationState extends State {
         Button registerButton = new Button("Register");
         Button backButton = new Button("Back");
 
-        eLabel.setTextFill(Color.rgb(250, 0, 0));
-        username.setStyle("-fx-text-inner-color: grey;");
-        password1.setStyle("-fx-text-inner-color: grey;");
-        password2.setStyle("-fx-text-inner-color: grey;");
-
         registerButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 registerButtonHit(username.getText(), password1.getText(), password2.getText());
-                myUser.setUsername(username.getText());
-                setChanged();
-                notifyObservers("login");
             }
         });
 
         backButton.setOnAction(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                setChanged();
-                notifyObservers("login");
+                changeState("login");
             }
         });
 
         GridPane buttonLayout = new GridPane();
         buttonLayout.add(registerButton, 0, 0);
         buttonLayout.add(backButton, 1, 0);
-
         myLayout.add(eLabel, 0, 0);
         myLayout.add(username, 0, 1);
         myLayout.add(password1, 0, 2);
         myLayout.add(password2, 0, 3);
         myLayout.add(buttonLayout, 0, 4);
-
         myScene = new Scene(myLayout);
     }
 
@@ -68,14 +56,15 @@ public class RegistrationState extends State {
             if (password1.length() <= 25) {
                 if (password1.equals(password2)) {
                     try {
-                        ResultSet rs = myDB.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "';");
-                        int iduser = 0;
+                        ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(login.username) from login WHERE login.username='" + username + "' AND login.password='" + password1 + "';");
                         if (rs.next()) {
-                            iduser = Integer.parseInt(rs.getString(1));
+                            if (Integer.parseInt(rs.getString(1)) == 0) {
+                                System.out.println("TEST");
+                                myDB.DML_Statement("INSERT INTO login (`username`, `password`) VALUES ('" + username + "', '" + password1 + "')");
+                                myUser.setUsername(username);
+                                changeState("login");
+                            } else eLabel.setText("Username taken");
                         }
-                        if (iduser == 0) {
-                            myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`users` (`username`, `password`) VALUES ('" + username + "', '" + password1 + "')");
-                        } else eLabel.setText("Username taken");
                     } catch (SQLException e) {
                         System.out.println("Exception: " + e);
                     }
