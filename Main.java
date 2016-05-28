@@ -1,14 +1,8 @@
 // Run Command: "java -classpath .:mysql-connector-java-5.1.38-bin.jar Main"
 
+import javafx.scene.Scene;
 import javafx.application.Application;
 import javafx.stage.Stage;
-import javafx.scene.layout.StackPane;
-import javafx.scene.control.Button;
-import javafx.scene.Scene;
-import java.util.Observer;
-import java.util.Observable;
-import java.lang.Integer;
-import java.sql.*;
 
 public class Main extends Application {
 

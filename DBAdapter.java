@@ -1,10 +1,4 @@
-/* Edgardo Gutierrez Jr.
- * 4/30/16
- * DatabaseHarness
- */
-
- import java.sql.*;
-
+import java.sql.*;
 
 public class DBAdapter {
     /**

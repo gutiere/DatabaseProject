@@ -1,67 +1,46 @@
-import javafx.stage.Stage;
-
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.GridPane;
+
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.KeyCode;
 
-import javafx.scene.control.Label;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
+import javafx.event.EventHandler;
+import javafx.event.ActionEvent;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-
 public class NewContactState extends State {
+
+    NewContactView myNewContactView;
+
     public NewContactState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
         super(theDB, theUser);
-        generateNewContactScene(theWidth, theHeight);
+        myNewContactView = new NewContactView(myUser.getUsername(), theWidth, theHeight);
+        generateControllers();
+        myScene = myNewContactView.getScene();
     }
 
-    private void generateNewContactScene(int theWidth, int theHeight) {
-        Label directions = new Label("Enter friend's username");
-        TextField contactName = new TextField();
-        Button createButton = new Button("Create");
-        Button cancelButton = new Button("Cancel");
-        myLayout = new GridPane();
-        eLabel = new Label("");
-        eLabel.setTextFill(Color.rgb(250, 0, 0));
-
-        contactName.setOnKeyPressed(new EventHandler<KeyEvent>() {
+    private void generateControllers() {
+        myNewContactView.setContactNameHandle(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
                 if (event.getCode() == KeyCode.ENTER)  {
-                    create(contactName.getText());
+                    create(myNewContactView.getContactName());
                 }
             }
         });
 
-        createButton.setOnAction(new EventHandler<ActionEvent>() {
+        myNewContactView.setCreateButtonHandle(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                create(contactName.getText());
+                create(myNewContactView.getContactName());
             }
         });
 
-        cancelButton.setOnAction(new EventHandler<ActionEvent>() {
+        myNewContactView.setCancelButtonHandle(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
                 changeState("home");
             }
         });
-
-        GridPane buttonLayout = new GridPane();
-        buttonLayout.add(createButton, 0, 0);
-        buttonLayout.add(cancelButton, 1, 0);
-
-        myLayout.add(directions, 0, 0);
-        myLayout.add(contactName, 0, 1);
-        myLayout.add(buttonLayout, 0, 2);
-        myLayout.add(eLabel, 0, 3);
-        myScene = new Scene(myLayout);
     }
 
     private void create(String theName) {

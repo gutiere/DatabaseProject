@@ -41,11 +41,12 @@ public class LoginState extends State {
         });
     }
 
-    private void handleLoginButton(String username, String password) {
+    private void handleLoginButton(String theUsername, String thePassword) {
         try {
-            ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(login.username) from login WHERE login.username='" + username + "' AND login.password='" + password + "';");
+            ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(login.username) from login WHERE login.username='" + theUsername + "' AND login.password='" + thePassword + "';");
             if (rs.next()) {
                 if (Integer.parseInt(rs.getString(1)) != 0) {
+                    myUser.setUsername(theUsername);
                     changeState("home");
                 } else myLoginView.setErrorMessage("Invalid login info");
             }

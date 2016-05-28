@@ -28,55 +28,38 @@ import javafx.animation.KeyFrame;
 import javafx.util.Duration;
 
 public class HomeState extends State {
-    private TextField myTextBox;
-    private int myContactID;
+
+    private HomeView myHomeView;
     private Timeline myTimer;
-    private Label myChatRoom;
-    private Menu myChatMenu;
 
     public HomeState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
         super(theDB, theUser);
-        myLayout = new GridPane();
-        generateHomeScene();
+        myHomeView = new HomeView(myUser.getUsername(), getMessages(5), createChatMenu(), createContactsMenu(), theWidth, theHeight);
+        generateControllers();
+        myScene = myHomeView.getScene();
         startTimer();
     }
 
-    private void generateHomeScene() {
-        myChatRoom = new Label(getMessages(5));
-        myTextBox = new TextField();
+    private void generateControllers() {
 
-        MenuBar menuBar = new MenuBar();
-        Menu menuFile = new Menu("File");
-        myChatMenu = new Menu("Chat");
-
-        MenuItem menuItemSignOut = new MenuItem("(Sign out)");
-        menuItemSignOut.setOnAction(new EventHandler<ActionEvent>() {
+        myHomeView.setSignoutHandle(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 myTimer.stop();
                 changeState("login");
             }
         });
 
-        myChatMenu = createChatMenu();
-        menuFile.getItems().add(menuItemSignOut);
-        menuBar.getMenus().addAll(menuFile, createContactsMenu(), myChatMenu);
-        myLayout.add(menuBar, 0, 0);
-        myLayout.add(myChatRoom, 0, 1);
-        myLayout.add(myTextBox, 0, 2);
-        myScene = new Scene(myLayout);
-
-        myTextBox.setOnKeyPressed(new EventHandler<KeyEvent>() {
+        myHomeView.setEnterHandle(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
                 if (event.getCode() == KeyCode.ENTER)  {
-                    String text = myTextBox.getText();
+                    String text = myHomeView.getTextField();
                     if (text.length() > 0) {
                         submitMessage(text);
-                        myTextBox.setText("");
+                        myHomeView.setTextField("");
                         myTimer.stop();
                         changeState("refresh");
                     }
-                    event.consume();
                 }
             }
         });
@@ -118,9 +101,7 @@ public class HomeState extends State {
             while (rs.next()) {
                 String contactName = rs.getString(1);
                 MenuItem contact = new MenuItem(contactName);
-                // System.out.println("'" + rs.getString(2) + "'");
                 contact.setDisable(Integer.parseInt(rs.getString(2)) == 0);
-
                 contactMenu.getItems().add(contact);
             }
         } catch (SQLException e) {
@@ -141,7 +122,6 @@ public class HomeState extends State {
 
     private Menu createConvMenu(String theConvName) {
         Menu menu = new Menu(theConvName);
-
         MenuItem select = new MenuItem("Select");
         Menu add = new Menu("Add user");
 
@@ -152,7 +132,7 @@ public class HomeState extends State {
                 changeState("refresh");
             }
         });
-    try {
+        try {
             ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
             while (rs.next()) {
                 MenuItem contact = createContactItem(theConvName,rs.getString(1));
@@ -225,7 +205,7 @@ public class HomeState extends State {
         myTimer = new Timeline(new KeyFrame(Duration.millis(200), new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                myChatRoom.setText(getMessages(5));
+                myHomeView.setChatRoom(getMessages(5));
             }
         }));
         myTimer.setCycleCount(Timeline.INDEFINITE);
