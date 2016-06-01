@@ -6,7 +6,7 @@ import java.util.Observable;
 public class StateManager implements Observer {
 
     private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    // private static final String URL = "jdbc:mysql://10.16.1.20:3306/gutierrez_edgardo_db?useSSL=false";
+    // private static final String URL = "jdbc:mysql://73.140.79.97:3306/gutierrez_edgardo_db?useSSL=false";
     private static final String USERNAME = "UWTuser";
     private static final String PASSWORD = "something";
     private static final int WIDTH = 300;
@@ -34,7 +34,8 @@ public class StateManager implements Observer {
         } else if (theState.equals("register")) {
             state = new RegistrationState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("home")) {
-            state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
+            state = new GameState(myDB, myUser, WIDTH, HEIGHT);
+            // state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("newconv")) {
             state = new NewConvState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("newcontact")) {
@@ -42,6 +43,8 @@ public class StateManager implements Observer {
         } else if (theState.equals("refresh")) {
             if (myCurrentState instanceof HomeState) {
                 state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
+            } else if (myCurrentState instanceof GameState) {
+                state = new GameState(myDB, myUser, WIDTH, HEIGHT);
             }
         }
         state.addObserver(this);
