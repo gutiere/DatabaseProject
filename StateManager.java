@@ -6,11 +6,11 @@ import java.util.Observable;
 public class StateManager implements Observer {
 
     private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    // private static final String URL = "jdbc:mysql://73.140.79.97:3306/gutierrez_edgardo_db?useSSL=false";
+    // private static final String URL = "jdbc:mysql://10.16.1.20:3306/gutierrez_edgardo_db?useSSL=false";
     private static final String USERNAME = "UWTuser";
     private static final String PASSWORD = "something";
-    private static final int WIDTH = 300;
-    private static final int HEIGHT = 200;
+    private static final int WIDTH = 350;
+    private static final int HEIGHT = 350;
     private Stage myStage;
     private State myCurrentState;
     private DBAdapter myDB;
@@ -40,6 +40,8 @@ public class StateManager implements Observer {
             state = new NewConvState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("newcontact")) {
             state = new NewContactState(myDB, myUser, WIDTH, HEIGHT);
+        } else if (theState.equals("newgame")) {
+            state = new NewGameState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("refresh")) {
             if (myCurrentState instanceof HomeState) {
                 state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
@@ -50,6 +52,7 @@ public class StateManager implements Observer {
         state.addObserver(this);
         myCurrentState = state;
         myStage.setScene(myCurrentState.getScene());
+        myStage.sizeToScene();
     }
 
     @Override

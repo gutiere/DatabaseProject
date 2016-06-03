@@ -31,6 +31,8 @@ public class HomeView extends View {
     private GridPane myLayout;
 
     public HomeView(String theUsername, String theMessages, Menu theChatMenu, Menu theContactsMenu, int theWidth, int theHeight) {
+        myWidth = theWidth;
+        myHeight = theHeight;
         instantiations(theUsername, theMessages);
         design(theChatMenu, theContactsMenu);
     }
@@ -52,7 +54,7 @@ public class HomeView extends View {
         myLayout.add(myMenuBar, 0, 0);
         myLayout.add(myChatRoom, 0, 1);
         myLayout.add(myTextField, 0, 2);
-        myScene = new Scene(myLayout);
+        myScene = new Scene(myLayout, myWidth, myHeight);
     }
 
     public void setSignoutHandle(EventHandler<ActionEvent> theEH) {

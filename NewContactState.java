@@ -45,18 +45,20 @@ public class NewContactState extends State {
 
     private void create(String theName) {
         if (theName.length() > 0) {
-            try {
-                String usernameQuery = "SELECT COUNT(users.username) FROM users WHERE users.username='" + theName + "';";
-                ResultSet rs = myDB.DML_ResultSet(usernameQuery);
-                if (rs.next()) {
-                    if (Integer.parseInt(rs.getString(1)) > 0) {
-                        myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`contacts` (`username`, `contact`) VALUES ('" + myUser.getUsername() + "', '" + theName + "');");
-                        changeState("home");
-                    } else eLabel.setText("User does not exist");
+            if (!theName.equals(myUser.getUsername())) {
+                try {
+                    String usernameQuery = "SELECT COUNT(users.username) FROM users WHERE users.username='" + theName + "';";
+                    ResultSet rs = myDB.DML_ResultSet(usernameQuery);
+                    if (rs.next()) {
+                        if (Integer.parseInt(rs.getString(1)) > 0) {
+                            myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`contacts` (`username`, `contact`) VALUES ('" + myUser.getUsername() + "', '" + theName + "');");
+                            changeState("home");
+                        } myNewContactView.setErrorMessage("User does not exist");
+                    }
+                } catch (SQLException e) {
+                    System.out.println(e);
                 }
-            } catch (SQLException e) {
-                System.out.println(e);
-            }
-        } else eLabel.setText("Username field is empty");
+            } else myNewContactView.setErrorMessage("You cannot add yourself");
+        } else myNewContactView.setErrorMessage("Username field is empty");
     }
 }

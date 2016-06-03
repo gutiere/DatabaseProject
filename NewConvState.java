@@ -46,12 +46,12 @@ public class NewConvState extends State {
     private void createConversation(String theName) {
         try {
             ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(conversations.name) FROM conversations WHERE conversations.name='" + theName + "';");
-            int idconversations = 0;
             if (rs.next()) {
                 if (Integer.parseInt(rs.getString(1)) == 0) {
                     myDB.DML_Statement("INSERT INTO conversations (`name`, `owner`) VALUES ('" + theName + "', '" + myUser.getUsername() + "');");
                     myDB.DML_Statement("INSERT INTO `gutierrez_edgardo_db`.`conversants` (`conversation`, `conversant`) VALUES ('" + theName + "', '" + myUser.getUsername() + "');");
                     myUser.setConvName(theName);
+                    changeState("home");
                 } else myNewConvView.setErrorMessage("Conversation exists");
             }
         } catch (SQLException e) {
@@ -62,7 +62,6 @@ public class NewConvState extends State {
     private void create(String theName) {
         if (theName.length() > 0) {
             createConversation(theName);
-            changeState("home");
         } else myNewConvView.setErrorMessage("Name field is empty");
     }
 }

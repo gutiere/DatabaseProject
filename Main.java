@@ -16,6 +16,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) throws Exception {
         myStateManager = new StateManager((Stage) primaryStage);
         primaryStage.setScene(myStateManager.getCurrentState());
+        primaryStage.setResizable(false);
         primaryStage.show();
     }
 }

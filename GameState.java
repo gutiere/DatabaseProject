@@ -28,6 +28,8 @@ import javafx.animation.Animation;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 
+import javafx.geometry.Point2D;
+
 import javafx.util.Duration;
 
 public class GameState extends State {
@@ -35,15 +37,21 @@ public class GameState extends State {
     private GameView myGameView;
     private Timeline myTimer;
     private Chess myChess;
+    private Point2D myOrigin;
+    private Point2D myDest;
 
     public GameState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
         super(theDB, theUser);
+        // Am I the party leader?
+        // myLeader = leaderStatus();
         myChess = new Chess();
         // true only if party leader v
-        myGameView = new GameView(false, myUser.getUsername(), getMessages(5), createChatMenu(), createContactsMenu(), theWidth, theHeight);
+        myGameView = new GameView(myUser, false, myUser.getUsername(), getMessages(5), createChatMenu(), createPlayMenu(), createContactsMenu(), theWidth, theHeight);
         generateControllers();
         myScene = myGameView.getScene();
         startTimer();
+        myChess.update(pollBoard());
+        myGameView.setBoardChars(myChess.getBoardChars());
     }
 
     private void generateControllers() {
@@ -63,8 +71,6 @@ public class GameState extends State {
                     if (text.length() > 0) {
                         submitMessage(text);
                         myGameView.setTextField("");
-                        myTimer.stop();
-                        changeState("refresh");
                     }
                 }
             }
@@ -77,13 +83,71 @@ public class GameState extends State {
                 myGameView.setBoardHandle(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent event) {
-                        System.out.println(row + ", " + col);
+                        if (myOrigin == null) {
+                            myOrigin = new Point2D(col, row);
+                        } else {
+                            if (true) {
+                                myChess.move((int) myOrigin.getX(), 7 - (int) myOrigin.getY(), col, 7 - row);
+                            } else {
+                                myChess.move((int) myOrigin.getX(), (int) myOrigin.getY(), col, row);
+                            }
+                            myOrigin = null;
+                            myDest = null;
+                            submitBoard(myChess.getBoard());
+                        }
+                        myGameView.setBoardChars(myChess.getBoardChars());
                     }
                 }, i, j);
             }
         }
+    }
 
+    private char[][] retrieveBoardChars() {
+        char[][] board = new char[8][8];
+        int counter = 0;
+        try {
+            ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
+            if (rs != null) {
+                rs.next();
+                for (int i = 0; i < 8; i++) {
+                    for (int j = 0; j < 8; j++) {
+                        board[i][j] = rs.getString(1).charAt(counter++);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+        return board;
+    }
 
+    private Menu createPlayMenu() {
+        Menu playMenu = new Menu("Play");
+        String[] games = getGames();
+        if (games != null) {
+            for (int i = 0; i < games.length; i++) {
+                playMenu.getItems().add(createGameMenu(games[i]));
+            }
+        }
+
+        MenuItem menuItemAdd = new MenuItem("Create game");
+        menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myTimer.stop();
+                changeState("newgame");
+            }
+        });
+
+        MenuItem menuItemRefresh = new MenuItem("Refresh");
+        menuItemRefresh.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myTimer.stop();
+                changeState("refresh");
+            }
+        });
+
+        playMenu.getItems().addAll(menuItemAdd, menuItemRefresh);
+        return playMenu;
     }
 
     private Menu createChatMenu() {
@@ -95,7 +159,7 @@ public class GameState extends State {
             }
         }
 
-        MenuItem menuItemAdd = new MenuItem("Add");
+        MenuItem menuItemAdd = new MenuItem("Create conversation");
         menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
                 myTimer.stop();
@@ -121,7 +185,17 @@ public class GameState extends State {
             ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
             while (rs.next()) {
                 String contactName = rs.getString(1);
-                MenuItem contact = new MenuItem(contactName);
+                Menu contact = new Menu(contactName);
+                MenuItem delete = new MenuItem("Delete");
+                delete.setOnAction(new EventHandler<ActionEvent>() {
+                    @Override public void handle(ActionEvent e) {
+                        String dropQuery = "DELETE FROM contacts WHERE contacts.username = '" + myUser.getUsername() + "' AND contacts.contact = '" + contactName + "';";
+                        myDB.DML_Statement(dropQuery);
+                        myTimer.stop();
+                        changeState("refresh");
+                    }
+                });
+                contact.getItems().add(delete);
                 contact.setDisable(Integer.parseInt(rs.getString(2)) == 0);
                 contactMenu.getItems().add(contact);
             }
@@ -141,10 +215,57 @@ public class GameState extends State {
         return contactMenu;
     }
 
+    private Menu createGameMenu(String theGameName) {
+        Menu menu = new Menu(theGameName);
+        MenuItem select = new MenuItem("Select");
+        MenuItem delete = new MenuItem("Delete");
+        Menu add = new Menu("Add contact");
+
+        select.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myUser.setGameName(theGameName);
+                myTimer.stop();
+                changeState("refresh");
+            }
+        });
+
+        delete.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                String dropQuery = "DELETE FROM players WHERE players.player = '" + myUser.getUsername() + "' AND players.game = '" + theGameName + "';";
+                myDB.DML_Statement(dropQuery);
+                if (myUser.getGameName().equals(theGameName)) {
+                    myUser.setGameName("NoGame");
+                }
+                myTimer.stop();
+                changeState("refresh");
+            }
+        });
+
+        try {
+            ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
+            if (rs != null) {
+                while (rs.next()) {
+                    MenuItem player = createPlayerItem(theGameName,rs.getString(1));
+                    player.setDisable(Integer.parseInt(rs.getString(2)) == 0);
+                    add.getItems().add(player);
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+
+        menu.getItems().add(select);
+        menu.getItems().add(add);
+        menu.getItems().add(delete);
+
+        return menu;
+    }
+
     private Menu createConvMenu(String theConvName) {
         Menu menu = new Menu(theConvName);
         MenuItem select = new MenuItem("Select");
-        Menu add = new Menu("Add user");
+        MenuItem delete = new MenuItem("Delete");
+        Menu add = new Menu("Add contact");
 
         select.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
@@ -153,10 +274,23 @@ public class GameState extends State {
                 changeState("refresh");
             }
         });
+
+        delete.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                String dropQuery = "DELETE FROM conversants WHERE conversants.conversant = '" + myUser.getUsername() + "' AND conversants.conversation = '" + theConvName + "';";
+                myDB.DML_Statement(dropQuery);
+                if (myUser.getConvName().equals(theConvName)) {
+                    myUser.setConvName("NoConv");
+                }
+                myTimer.stop();
+                changeState("refresh");
+            }
+        });
+
         try {
             ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
             while (rs.next()) {
-                MenuItem contact = createContactItem(theConvName,rs.getString(1));
+                MenuItem contact = createConversantItem(theConvName,rs.getString(1));
                 contact.setDisable(Integer.parseInt(rs.getString(2)) == 0);
                 add.getItems().add(contact);
             }
@@ -166,11 +300,12 @@ public class GameState extends State {
 
         menu.getItems().add(select);
         menu.getItems().add(add);
+        menu.getItems().add(delete);
 
         return menu;
     }
 
-    private MenuItem createContactItem(String theConv, String theContact) {
+    private MenuItem createConversantItem(String theConv, String theContact) {
         MenuItem contact = new MenuItem(theContact);
         contact.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
@@ -181,11 +316,52 @@ public class GameState extends State {
         return contact;
     }
 
+    private MenuItem createPlayerItem(String theGame, String thePlayer) {
+        MenuItem player = new MenuItem(thePlayer);
+        player.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                String addQuery = "INSERT INTO players (game, player) VALUES ('" + theGame + "', '" + thePlayer + "');";
+                myDB.DML_Statement(addQuery);
+            }
+        });
+        return player;
+    }
+
     private void submitMessage(String theMessage) {
-            String submitQuery = "INSERT INTO `gutierrez_edgardo_db`.`messages` "
-              + "(`sender`, `conversation`, `message`) "
-              + "VALUES ('" + myUser.getUsername() + "', '" + myUser.getConvName() + "', '" + theMessage + "');";
+        String message = myUser.getUsername() + ": " + theMessage;
+        String submitQuery = "INSERT INTO `gutierrez_edgardo_db`.`messages` "
+          + "(`sender`, `conversation`, `message`) "
+          + "VALUES ('" + myUser.getUsername() + "', '" + myUser.getConvName() + "', '" + message + "');";
+        myDB.DML_Statement(submitQuery);
+    }
+
+    private void submitBoard(String theBoard) {
+            String submitQuery = "INSERT INTO `gutierrez_edgardo_db`.`plays` "
+              + "(`game`, `player`, `play`) "
+              + "VALUES ('" + myUser.getGameName() + "', '" + myUser.getUsername() + "', '" + theBoard + "');";
             myDB.DML_Statement(submitQuery);
+    }
+
+    private String[] getGames() {
+        String[] games = null;
+        try {
+            String countQuery = "SELECT COUNT(games.name) FROM games, players WHERE games.name = players.game AND players.player = '" + myUser.getUsername() + "';";
+            String gameQuery = "SELECT games.name FROM games, players WHERE games.name = players.game AND players.player = '" + myUser.getUsername() + "';";
+            ResultSet rs = myDB.DML_ResultSet(countQuery);
+            if (rs != null) {
+                if (rs.next()) {
+                    games = new String[Integer.parseInt(rs.getString(1))];
+                    rs = myDB.DML_ResultSet(gameQuery);
+                    int i = 0;
+                    while (rs.next()) {
+                        games[i++] = rs.getString(1);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Exception: " + e);
+        }
+        return games;
     }
 
     private String[] getConversations() {
@@ -194,12 +370,14 @@ public class GameState extends State {
             String countQuery = "SELECT COUNT(conversations.name) FROM conversations, conversants WHERE conversations.name = conversants.conversation AND conversants.conversant = '" + myUser.getUsername() + "';";
             String convQuery = "SELECT conversations.name FROM conversations, conversants WHERE conversations.name = conversants.conversation AND conversants.conversant = '" + myUser.getUsername() + "';";
             ResultSet rs = myDB.DML_ResultSet(countQuery);
-            if (rs.next()) {
-                conversations = new String[Integer.parseInt(rs.getString(1))];
-                rs = myDB.DML_ResultSet(convQuery);
-                int i = 0;
-                while (rs.next()) {
-                    conversations[i++] = rs.getString(1);
+            if (rs != null) {
+                if (rs.next()) {
+                    conversations = new String[Integer.parseInt(rs.getString(1))];
+                    rs = myDB.DML_ResultSet(convQuery);
+                    int i = 0;
+                    while (rs.next()) {
+                        conversations[i++] = rs.getString(1);
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -213,8 +391,10 @@ public class GameState extends State {
         try {
             String messagesQuery = "SELECT messages.message FROM messages WHERE messages.conversation='" + myUser.getConvName() + "' ORDER BY messages.id DESC LIMIT " + theAmount + ";";
             ResultSet rs = myDB.DML_ResultSet(messagesQuery);
-            while (rs.next()) {
-                messages = rs.getString(1) + '\n' + messages;
+            if (rs != null) {
+                while (rs.next()) {
+                    messages = rs.getString(1) + '\n' + messages;
+                }
             }
         } catch (SQLException e) {
             System.out.println("Exception: " + e);
@@ -222,11 +402,30 @@ public class GameState extends State {
         return messages;
     }
 
+    public String pollBoard() {
+        String play = "";
+        try {
+            String playQuery = "SELECT plays.play FROM plays WHERE plays.game='" + myUser.getGameName() + "' ORDER BY plays.id DESC LIMIT 1;";
+            ResultSet rs = myDB.DML_ResultSet(playQuery);
+            if (rs.next()) {
+                play = rs.getString(1);
+            }
+        } catch (SQLException e) {
+            System.out.println("Exception: " + e);
+        }
+        if (play.length() != 64) {
+            return "rnbkqbnrpppppppp--------------------------------PPPPPPPPRNBKQBNR";
+        }
+        return play;
+    }
+
     private void startTimer() {
         myTimer = new Timeline(new KeyFrame(Duration.millis(200), new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
                 myGameView.setChatRoom(getMessages(5));
+                // myChess.update(pollBoard());
+                // myGameView.setBoardChars(myChess.getBoardChars());
             }
         }));
         myTimer.setCycleCount(Timeline.INDEFINITE);

@@ -18,5 +18,25 @@ public class Chess {
         return myBoard.move(theOriginCol - 96, theOriginRow, theDestCol - 96, theDestRow);
     }
 
+    public boolean move(int theOriginCol, int theOriginRow, int theDestCol, int theDestRow) {
+        return myBoard.move(theOriginCol, theOriginRow, theDestCol, theDestRow);
+    }
+
+    public char[][] getBoardChars() {
+        return myBoard.getBoardChars();
+    }
+
+    public String getBoard() {
+        return myBoard.getBoard();
+    }
+
+    public String toString() {
+        return myBoard.toString();
+    }
+
+    public void update(String theBoard) {
+        myBoard.setBoard(theBoard);
+    }
+
 
 }

@@ -21,6 +21,8 @@ public class LoginView extends View {
     private Label myError;
 
     public LoginView(String theUsername, int theWidth, int theHeight) {
+        myWidth = 200;
+        myHeight = 98;
         instantiations(theUsername);
         design();
     }
@@ -36,6 +38,12 @@ public class LoginView extends View {
     }
 
     private void design() {
+        myUsername.setPrefWidth(myWidth);
+        myPassword.setPrefWidth(myWidth);
+        myLoginButton.setPrefWidth(myWidth / 2);
+        myRegisterButton.setPrefWidth(myWidth / 2);
+
+
         myError.setTextFill(Color.rgb(250, 0, 0));
         myButtonLayout.add(myRegisterButton, 1, 0);
         myButtonLayout.add(myLoginButton, 0, 0);

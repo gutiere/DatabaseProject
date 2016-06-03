@@ -26,6 +26,8 @@ public class RegistrationView extends View {
 
 
     public RegistrationView(String theUsername, int theWidth, int theHeight) {
+        myWidth = 200;
+        myHeight = 120;
         instantiations(theUsername);
         design();
     }
@@ -42,6 +44,11 @@ public class RegistrationView extends View {
     }
 
     private void design() {
+        myUsername.setPrefWidth(myWidth);
+        myPassword1.setPrefWidth(myWidth);
+        myPassword2.setPrefWidth(myWidth);
+        myRegistrationButton.setPrefWidth(myWidth / 2);
+        myBackButton.setPrefWidth(myWidth / 2);
         myError.setTextFill(Color.rgb(250, 0, 0));
         myButtonLayout.add(myRegistrationButton, 0, 0);
         myButtonLayout.add(myBackButton, 1, 0);

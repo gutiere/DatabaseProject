@@ -32,9 +32,9 @@ public class Board {
     public boolean move(int theOriginCol, int theOriginRow, int theDestCol, int theDestRow) {
         boolean success = false;
         if (checkRules(theOriginCol, theOriginRow, theDestCol, theDestRow)) {
-            char temp = myBoard[theOriginRow - 1][theOriginCol - 1];
-            myBoard[theOriginRow - 1][theOriginCol - 1] = '-';
-            myBoard[theDestRow - 1][theDestCol - 1] = temp;
+            char temp = myBoard[theOriginRow][theOriginCol];
+            myBoard[theOriginRow][theOriginCol] = '-';
+            myBoard[theDestRow][theDestCol] = temp;
             success = true;
         }
         return success;
@@ -50,7 +50,7 @@ public class Board {
         return myBoard[theDestRow][theDestCol] == '-';
     }
 
-    private void setBoard(String theBoard) {
+    public void setBoard(String theBoard) {
         int counter = 0;
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -59,7 +59,7 @@ public class Board {
         }
     }
 
-    private String getBoard() {
+    public String getBoard() {
         String board = "";
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
@@ -67,6 +67,10 @@ public class Board {
             }
         }
         return board;
+    }
+
+    public char[][] getBoardChars() {
+        return myBoard;
     }
 
     public String toString() {

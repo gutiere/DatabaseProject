@@ -11,17 +11,17 @@ import javafx.scene.input.KeyEvent;
 import javafx.event.EventHandler;
 import javafx.event.ActionEvent;
 
-public class NewConvView extends View {
+public class NewGameView extends View {
 
     private Label myDirections;
     private Label myError;
-    private TextField myConvName;
+    private TextField myGameName;
     private Button myCreateButton;
     private Button myCancelButton;
     private GridPane myButtonLayout, myLayout;
 
 
-    public NewConvView(String theUsername, int theWidth, int theHeight) {
+    public NewGameView(String theUsername, int theWidth, int theHeight) {
         myWidth = theWidth;
         myHeight = theHeight;
         instantiations();
@@ -29,8 +29,8 @@ public class NewConvView extends View {
     }
 
     private void instantiations() {
-        myDirections = new Label("Enter conversation name");
-        myConvName = new TextField();
+        myDirections = new Label("Enter game name");
+        myGameName = new TextField();
         myCreateButton = new Button("Create");
         myCancelButton = new Button("Cancel");
         myLayout = new GridPane();
@@ -43,18 +43,18 @@ public class NewConvView extends View {
         myButtonLayout.add(myCreateButton, 0, 0);
         myButtonLayout.add(myCancelButton, 1, 0);
         myLayout.add(myDirections, 0, 0);
-        myLayout.add(myConvName, 0, 1);
+        myLayout.add(myGameName, 0, 1);
         myLayout.add(myButtonLayout, 0, 2);
         myLayout.add(myError, 0, 3);
         myScene = new Scene(myLayout);
     }
 
-    public String getConvName() {
-        return myConvName.getText();
+    public String getGameName() {
+        return myGameName.getText();
     }
 
-    public void setConvNameHandle(EventHandler<KeyEvent> theEH) {
-        myConvName.setOnKeyPressed(theEH);
+    public void setGameNameHandle(EventHandler<KeyEvent> theEH) {
+        myGameName.setOnKeyPressed(theEH);
     }
 
     public void setCancelButtonHandle(EventHandler<ActionEvent> theEH) {

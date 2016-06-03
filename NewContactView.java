@@ -22,12 +22,14 @@ public class NewContactView extends View {
 
 
     public NewContactView(String theUsername, int theWidth, int theHeight) {
+        myWidth = theWidth;
+        myHeight = theHeight;
         instantiations();
         design();
     }
 
     private void instantiations() {
-        myDirections = new Label("Enter conversation name");
+        myDirections = new Label("Enter contact name");
         myContactName = new TextField();
         myCreateButton = new Button("Create");
         myCancelButton = new Button("Cancel");
