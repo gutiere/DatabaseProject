@@ -1,93 +1,57 @@
 import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-import javafx.scene.control.Button;
-import javafx.stage.Stage;
-import javafx.scene.layout.GridPane;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
-import javafx.scene.control.PasswordField;
+
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCode;
+
 import javafx.event.EventHandler;
 import javafx.event.ActionEvent;
-import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
-import java.sql.*;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class LoginState extends State {
-    // private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String USERNAME = "UWTuser";
-    private static final String PASSWORD = "something";
-    private GridPane myLayout;
-    private Scene myScene;
-    private Label eLabel;
-    private TextField myUsername;
-
-    public LoginState(int theWidth, int theHeight) {
-        myLayout = new GridPane();
-        myUsername = new TextField("Username");
+    private LoginView myLoginView;
+    public LoginState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
+        super(theDB, theUser);
+        myLoginView = new LoginView(myUser.getUsername(), theWidth, theHeight);
+        generateControllers();
+        myScene = myLoginView.getScene();
     }
 
-    private void generateLoginScene() {
-        PasswordField password = new PasswordField();
-        Button loginButton = new Button("Login");
-        Button registerButton = new Button("Register");
-        myUsername.setStyle("-fx-text-inner-color: grey;");
-        eLabel = new Label("");
-        eLabel.setTextFill(Color.rgb(250, 0, 0));
-
-        loginButton.setOnAction(new EventHandler<ActionEvent>() {
+    private void generateControllers() {
+        myLoginView.setLoginButtonHandle(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                handleLoginButton(myUsername.getText(), password.getText());
+                handleLoginButton(myLoginView.getUsername(), myLoginView.getPassword());
             }
         });
 
-        registerButton.setOnAction(new EventHandler<ActionEvent>() {
+        myLoginView.setRegisterButtonHandle(new EventHandler<ActionEvent>() {
             public void handle(ActionEvent event) {
-                setChanged();
-                notifyObservers("register");
+                changeState("register");
             }
         });
 
-        GridPane buttonLayout = new GridPane();
-        buttonLayout.add(registerButton, 1, 0);
-        buttonLayout.add(loginButton, 0, 0);
-
-        myLayout.add(eLabel, 0, 0);
-        myLayout.add(myUsername, 0, 1);
-        myLayout.add(password, 0, 2);
-        myLayout.add(buttonLayout, 0, 3);
-        myScene = new Scene(myLayout);
+        myLoginView.setEnterHandle(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if (event.getCode() == KeyCode.ENTER)  {
+                    handleLoginButton(myLoginView.getUsername(), myLoginView.getPassword());
+                }
+            }
+        });
     }
 
-    private void handleLoginButton(String username, String password) {
+    private void handleLoginButton(String theUsername, String thePassword) {
         try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet("SELECT users.idusers FROM users WHERE users.username='" + username + "' AND users.password='" + password + "';");
-            int iduser = 0;
+            ResultSet rs = myDB.DML_ResultSet("SELECT COUNT(login.username) from login WHERE login.username='" + theUsername + "' AND login.password='" + thePassword + "';");
             if (rs.next()) {
-                iduser = Integer.parseInt(rs.getString(1));
-            }
-            if (iduser != 0) {
-                setChanged();
-                notifyObservers(iduser);
-            } else {
-                eLabel.setText("Invalid login info");
+                if (Integer.parseInt(rs.getString(1)) != 0) {
+                    myUser.setUsername(theUsername);
+                    changeState("home");
+                } else myLoginView.setErrorMessage("Invalid login info");
             }
         } catch (SQLException e) {
-            eLabel.setText("No database connection");
+            myLoginView.setErrorMessage("No database connection");
         }
-    }
-
-    public void setUsername(String theUsername) {
-        myUsername.setText(theUsername);
-    }
-
-    public void setErrorMessage(String theError) {
-        eLabel.setText(theError);
-    }
-
-    public Scene getScene() {
-        generateLoginScene();
-        return myScene;
     }
 }

@@ -1,232 +1,214 @@
+import javafx.stage.Stage;
+
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 import javafx.scene.layout.GridPane;
-import javafx.event.EventHandler;
-import javafx.event.ActionEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.layout.VBox;
-import javafx.event.EventHandler;
-import javafx.scene.input.KeyCode;
-import java.sql.*;
-import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
-import javafx.animation.AnimationTimer;
-import javafx.application.Application;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.paint.Color;
-import javafx.stage.Stage;
-import javax.swing.Timer;
+import javafx.scene.input.KeyCode;
+
+import javafx.scene.control.Label;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import java.awt.event.ActionListener;
+
+import javafx.animation.Animation;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
+
+import javafx.util.Duration;
 
 public class HomeState extends State {
 
-    // private static final String URL = "jdbc:mysql://localhost:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String URL = "jdbc:mysql://192.168.1.102:3306/gutierrez_edgardo_db?useSSL=false";
-    private static final String USERNAME = "UWTuser";
-    private static final String PASSWORD = "something";
-    private GridPane myLayout;
-    private Scene myScene;
-    private Label eLabel;
-    private TextField myTextBox;
-    private String myConvName;
-    private int myUserID;
-    private String myUsername;
-    private int myConvID;
-    private Timer myTimer;
+    private HomeView myHomeView;
+    private Timeline myTimer;
 
-    public HomeState(int theWidth, int theHeight) {
-        myLayout = new GridPane();
-
-
-
+    public HomeState(DBAdapter theDB, User theUser, int theWidth, int theHeight) {
+        super(theDB, theUser);
+        myHomeView = new HomeView(myUser.getUsername(), getMessages(5), createChatMenu(), createContactsMenu(), theWidth, theHeight);
+        generateControllers();
+        myScene = myHomeView.getScene();
+        startTimer();
     }
 
-    private void generateLoginScene() {
-        Label welcome = new Label(getMessages(5));
-        myTextBox = new TextField();
+    private void generateControllers() {
 
-        MenuBar menuBar = new MenuBar();
-        Menu menuFile = new Menu("File");
-        Menu menuChat = new Menu("Chat");
-
-        String[] conversations = getConversations();
-        if (conversations != null) {
-            for (int i = 0; i < conversations.length; i++) {
-                menuChat.getItems().add(menuCreateConvMenuItem(conversations[i]));
-            }
-        }
-
-
-        MenuItem menuItemAdd = new MenuItem("  +");
-        menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
+        myHomeView.setSignoutHandle(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
-                setChanged();
-                notifyObservers("newconv");
+                myTimer.stop();
+                changeState("login");
             }
         });
 
-        MenuItem menuItemRefresh = new MenuItem("(Refresh)");
-        menuItemRefresh.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-                setChanged();
-                notifyObservers("refresh");
-            }
-        });
-
-        MenuItem menuItemSignOut = new MenuItem("(Sign out)");
-        menuItemSignOut.setOnAction(new EventHandler<ActionEvent>() {
-            @Override public void handle(ActionEvent e) {
-                setChanged();
-                notifyObservers("login");
-            }
-        });
-
-        menuChat.getItems().add(menuItemAdd);
-        menuChat.getItems().add(menuItemRefresh);
-
-        menuFile.getItems().add(menuItemSignOut);
-
-        menuBar.getMenus().addAll(menuFile, menuChat);
-        myLayout.add(menuBar, 0, 0);
-        myLayout.add(welcome, 0, 1);
-        myLayout.add(myTextBox, 0, 2);
-        myScene = new Scene(myLayout);
-
-        myTextBox.setOnKeyPressed(new EventHandler<KeyEvent>() {
+        myHomeView.setEnterHandle(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
                 if (event.getCode() == KeyCode.ENTER)  {
-                    String text = myTextBox.getText();
+                    String text = myHomeView.getTextField();
                     if (text.length() > 0) {
                         submitMessage(text);
-                        myTextBox.setText("");
-                        setChanged();
-                        notifyObservers("refresh");
+                        myHomeView.setTextField("");
+                        myTimer.stop();
+                        changeState("refresh");
                     }
-                    event.consume();
                 }
             }
         });
     }
 
-    private MenuItem menuCreateConvMenuItem(String theName) {
-        MenuItem temp = new MenuItem();
-        temp.setOnAction(new EventHandler<ActionEvent>() {
+    private Menu createChatMenu() {
+        Menu chatMenu = new Menu("Chat");
+        String[] conversations = getConversations();
+        if (conversations != null) {
+            for (int i = 0; i < conversations.length; i++) {
+                chatMenu.getItems().add(createConvMenu(conversations[i]));
+            }
+        }
+
+        MenuItem menuItemAdd = new MenuItem("Add");
+        menuItemAdd.setOnAction(new EventHandler<ActionEvent>() {
             @Override public void handle(ActionEvent e) {
-                try {
-                    DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-                    String countQuery = "SELECT conversations.idconversations FROM conversations WHERE conversations.name='" + theName + "';";
-                    ResultSet rs = db.DML_ResultSet(countQuery);
-                    if (rs.next()) {
-                        myConvID = Integer.parseInt(rs.getString(1));
-                    }
-                } catch (SQLException exception) {
-                    System.out.println(exception);
-                }
-                myConvName = theName;
-                // Update State Manager
-                Object[] info = {myUserID, myConvID, myConvName};
-                setChanged();
-                notifyObservers(info);
-                setChanged();
-                notifyObservers("refresh");
+                myTimer.stop();
+                changeState("newconv");
             }
         });
 
-        temp.setText(theName);
-        return temp;
+        MenuItem menuItemRefresh = new MenuItem("Refresh");
+        menuItemRefresh.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myTimer.stop();
+                changeState("refresh");
+            }
+        });
+
+        chatMenu.getItems().addAll(menuItemAdd, menuItemRefresh);
+        return chatMenu;
+    }
+
+    private Menu createContactsMenu() {
+        Menu contactMenu = new Menu("Contacts");
+        try {
+            ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
+            while (rs.next()) {
+                String contactName = rs.getString(1);
+                MenuItem contact = new MenuItem(contactName);
+                contact.setDisable(Integer.parseInt(rs.getString(2)) == 0);
+                contactMenu.getItems().add(contact);
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+
+        MenuItem addContact = new MenuItem("Add");
+        addContact.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myTimer.stop();
+                changeState("newcontact");
+            }
+        });
+
+        contactMenu.getItems().add(addContact);
+        return contactMenu;
+    }
+
+    private Menu createConvMenu(String theConvName) {
+        Menu menu = new Menu(theConvName);
+        MenuItem select = new MenuItem("Select");
+        Menu add = new Menu("Add user");
+
+        select.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                myUser.setConvName(theConvName);
+                myTimer.stop();
+                changeState("refresh");
+            }
+        });
+        try {
+            ResultSet rs = myDB.DML_ResultSet("SELECT contacts.contact, gutierrez_edgardo_db.online.online FROM contacts RIGHT JOIN gutierrez_edgardo_db.online ON contacts.contact = gutierrez_edgardo_db.online.username WHERE contacts.username='" + myUser.getUsername() + "' ORDER BY contacts.contact;");
+            while (rs.next()) {
+                MenuItem contact = createContactItem(theConvName,rs.getString(1));
+                contact.setDisable(Integer.parseInt(rs.getString(2)) == 0);
+                add.getItems().add(contact);
+            }
+        } catch (SQLException e) {
+            System.out.println(e);
+        }
+
+        menu.getItems().add(select);
+        menu.getItems().add(add);
+
+        return menu;
+    }
+
+    private MenuItem createContactItem(String theConv, String theContact) {
+        MenuItem contact = new MenuItem(theContact);
+        contact.setOnAction(new EventHandler<ActionEvent>() {
+            @Override public void handle(ActionEvent e) {
+                String addQuery = "INSERT INTO conversants (conversation, conversant) VALUES ('" + theConv + "', '" + theContact + "');";
+                myDB.DML_Statement(addQuery);
+            }
+        });
+        return contact;
     }
 
     private void submitMessage(String theMessage) {
-        try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            String countQuery = "SELECT COUNT(*) FROM messages WHERE messages.conversation=" + myConvID + ";";
-            ResultSet rs = db.DML_ResultSet(countQuery);
-            int totalMessages = 0;
-            if (rs.next()) {
-                totalMessages = Integer.parseInt(rs.getString(1));
-            }
-            int counter = totalMessages + 1;
             String submitQuery = "INSERT INTO `gutierrez_edgardo_db`.`messages` "
-              + "(`conversation`, `counter`, `sender`, `message`) "
-              + "VALUES ('" + myConvID + "', '" + counter + "', '" + myUserID + "', '" + theMessage + "');";
-            db.DML_Statement(submitQuery);
-        } catch (SQLException e) {
-            System.out.println("Exception: " + e);
-        }
+              + "(`sender`, `conversation`, `message`) "
+              + "VALUES ('" + myUser.getUsername() + "', '" + myUser.getConvName() + "', '" + theMessage + "');";
+            myDB.DML_Statement(submitQuery);
     }
 
     private String[] getConversations() {
-        String countQuery = "SELECT COUNT(*) FROM conversations";
-        String convsQuery = "SELECT conversations.name FROM gutierrez_edgardo_db.conversations;";
-
+        String[] conversations = null;
         try {
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet(countQuery);
-            int totalConvs = 0;
+            String countQuery = "SELECT COUNT(conversations.name) FROM conversations, conversants WHERE conversations.name = conversants.conversation AND conversants.conversant = '" + myUser.getUsername() + "';";
+            String convQuery = "SELECT conversations.name FROM conversations, conversants WHERE conversations.name = conversants.conversation AND conversants.conversant = '" + myUser.getUsername() + "';";
+            ResultSet rs = myDB.DML_ResultSet(countQuery);
             if (rs.next()) {
-                totalConvs = Integer.parseInt(rs.getString(1));
-            }
-
-            // At least 1 conversation
-            if (totalConvs > 0) {
-                rs = db.DML_ResultSet(convsQuery);
-                String[] convNames = new String[totalConvs];
-                rs.next();
-                for (int i = 0; i < totalConvs; i++) {
-                    convNames[i] = rs.getString(1);
-                    rs.next();
+                conversations = new String[Integer.parseInt(rs.getString(1))];
+                rs = myDB.DML_ResultSet(convQuery);
+                int i = 0;
+                while (rs.next()) {
+                    conversations[i++] = rs.getString(1);
                 }
-                return convNames;
             }
         } catch (SQLException e) {
             System.out.println("Exception: " + e);
         }
-        return null;
+        return conversations;
     }
 
     private String getMessages(int theAmount) {
+        String messages = "";
         try {
-            String countQuery = "SELECT COUNT(*) FROM messages WHERE messages.conversation=" + myConvID + ";";
-            DBAdapter db = new DBAdapter(URL, USERNAME, PASSWORD);
-            ResultSet rs = db.DML_ResultSet(countQuery);
-            int totalMessages = 0;
-            if (rs.next()) {
-                totalMessages = Integer.parseInt(rs.getString(1));
+            String messagesQuery = "SELECT messages.message FROM messages WHERE messages.conversation='" + myUser.getConvName() + "' ORDER BY messages.id DESC LIMIT " + theAmount + ";";
+            ResultSet rs = myDB.DML_ResultSet(messagesQuery);
+            while (rs.next()) {
+                messages = rs.getString(1) + '\n' + messages;
             }
-            String messagesQuery = "SELECT messages.message FROM messages WHERE messages.conversation=" + myConvID + ";";
-            rs = db.DML_ResultSet(messagesQuery);
-            rs.next();
-            String messages = "";
-            int threshhold = -1;
-            if (totalMessages > theAmount) threshhold = totalMessages - theAmount;
-
-            for (int i = 0; i < totalMessages; i++) {
-                if (i > threshhold) {
-                    messages += rs.getString(1) + '\n';
-                }
-                rs.next();
-            }
-            return messages;
         } catch (SQLException e) {
             System.out.println("Exception: " + e);
         }
-        return "ERROR";
+        return messages;
     }
 
-    public void setErrorMessage(String theError) {
-        eLabel.setText(theError);
-    }
-
-    public void setInfo(int theUserID, int theConvID, String theConvName) {
-        myUserID = theUserID;
-        myConvID = theConvID;
-        myConvName = theConvName;
-    }
-
-    public Scene getScene() {
-        generateLoginScene();
-        return myScene;
+    private void startTimer() {
+        myTimer = new Timeline(new KeyFrame(Duration.millis(200), new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                myHomeView.setChatRoom(getMessages(5));
+            }
+        }));
+        myTimer.setCycleCount(Timeline.INDEFINITE);
+        myTimer.play();
     }
 }
