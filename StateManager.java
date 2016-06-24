@@ -35,7 +35,6 @@ public class StateManager implements Observer {
             state = new RegistrationState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("home")) {
             state = new GameState(myDB, myUser, WIDTH, HEIGHT);
-            // state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("newconv")) {
             state = new NewConvState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("newcontact")) {
@@ -43,9 +42,7 @@ public class StateManager implements Observer {
         } else if (theState.equals("newgame")) {
             state = new NewGameState(myDB, myUser, WIDTH, HEIGHT);
         } else if (theState.equals("refresh")) {
-            if (myCurrentState instanceof HomeState) {
-                state = new HomeState(myDB, myUser, WIDTH, HEIGHT);
-            } else if (myCurrentState instanceof GameState) {
+            if (myCurrentState instanceof GameState) {
                 state = new GameState(myDB, myUser, WIDTH, HEIGHT);
             }
         }
