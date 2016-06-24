@@ -1,3 +1,9 @@
+/**
+* @author  Edgardo Gutierrez Jr.
+* @version 1.0
+* @since   2016-6-1
+*/
+
 import java.util.Observable;
 import javafx.scene.Scene;
 import java.awt.event.ActionListener;

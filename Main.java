@@ -1,3 +1,9 @@
+/**
+* @author  Edgardo Gutierrez Jr.
+* @version 1.0
+* @since   2016-6-1
+*/
+
 // Run Command: "java -classpath .:mysql-connector-java-5.1.38-bin.jar Main"
 
 import javafx.scene.Scene;

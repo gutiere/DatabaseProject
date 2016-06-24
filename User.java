@@ -1,3 +1,9 @@
+/**
+* @author  Edgardo Gutierrez Jr.
+* @version 1.0
+* @since   2016-6-1
+*/
+
 public class User {
     private String myUsername, myConvName, myGameName;
 
